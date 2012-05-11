@@ -1,0 +1,48 @@
+print("Video Stream loading....")
+
+def youtubeUrl = "http://gdata.youtube.com/feeds/api/standardfeeds/most_popular?v=2&alt=json"
+def createYoutubeObservable(ev) { Stream.fromHttpRequest(youtubeUrl) }
+def advYoutube(video) { 
+    def return = {}
+    if ("title" in video){
+        return.title = video.title["$t"] 
+    } else {
+        return.title = "EXTRA DATA...."
+    }
+
+    if ("media$group" in video){
+        return.description = video["media$group"]["media$description"]["$t"] 
+    } else {
+        return.description = "EXTRA DATA...."
+    }
+    return
+}
+
+def buttonUpdate = Stream.fromDOMEvent(bq("update").iter(),"click")
+def timer = Stream.timer(60000)
+
+def videos = timer:observe(createYoutubeObservable):flatten():map(advYoutube)
+
+def zipStream = videos:zip(buttonUpdate)
+
+# Pull in some tweets right now by firing the timer stream.
+timer:push(0)
+
+#onclick activates a push on for userStream
+
+
+# Append the tweets to the page.
+# has double lambda
+# 1) wait for a tweet
+# 2) wait for user to push so that ZipStream emits something
+
+def streamElement = bq("stream")
+zipStream:subscribe(lambda(pair){
+    def video = pair[0]
+    def videoTml = "<VBox><HBox>Title: " + video.title + "</HBox>" + \
+      "<HBox>" + video.description + "</HBox></VBox>"
+    streamElement:append(videoTml) 
+    relayout()
+})
+
+

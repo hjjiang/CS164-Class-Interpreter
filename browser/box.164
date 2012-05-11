@@ -1,0 +1,71 @@
+##
+# Box: The superclass of VBox and HBox, both of which share how their widths
+# are computed, as a fraction of their parent elements' widths.
+#
+def Box = Node:new({ \
+  fract=100, background="transparent", \
+  topMargin=5, rightMargin=5, bottomMargin=5, leftMargin=5, \
+  topPadding=5, rightPadding=5, bottomPadding=5, leftPadding=5 \
+})
+
+##
+# Pre- and post-order tree-traversal iterators
+#
+def preorder(tree) { wrap(lambda(_){ tree:visitInPreorder() }, null) }
+def postorder(tree) { wrap(lambda(_){ tree:visitInPostorder() }, null) }
+
+##
+# Box instances each have their own list of children.
+#
+Box.new = lambda(self, obj) {
+  obj = Node.new(self, obj)
+  if (not("children" in obj)) { obj.children = {} }
+  obj
+}
+
+Box.visitInPreorder = lambda(self) {
+  yield(self)
+  for (child in self.children) {
+    child:visitInPreorder()
+  }
+}
+
+Box.visitInPostorder = lambda(self) {
+  for (child in self.children) {
+    child:visitInPostorder()
+  }
+  yield(self)
+}
+
+Box.addChild = lambda(self, child) {
+  append(self.children, child)
+  child.parent = self
+  self
+}
+
+Box.pass1_ComputeWidth = lambda(self) {
+  # "Cast" the various fields to ints.
+  def int(n) { native __builtin__.int({x=n}) }
+  self.fract = int(self.fract)
+  self.topMargin = int(self.topMargin)
+  self.rightMargin = int(self.rightMargin)
+  self.bottomMargin = int(self.bottomMargin)
+  self.leftMargin = int(self.leftMargin)
+  self.topPadding = int(self.topPadding)
+  self.rightPadding = int(self.rightPadding)
+  self.bottomPadding = int(self.bottomPadding)
+  self.leftPadding = int(self.leftPadding)
+
+  def parentHorizPadding = self.parent.leftPadding + self.parent.rightPadding
+  def availableWidth = self.parent.width - parentHorizPadding
+  def horizMargin = self.leftMargin + self.rightMargin
+  self.width = availableWidth * self.fract / 100 - horizMargin
+}
+
+Box.pass4_Render = lambda(self) {
+  def properties = {backgroundColor=self.background}
+  self.__qt = native runtime.drawBox({ \
+    x=self.x, y=self.y, width=self.width, height=self.height, \
+    properties=properties, widget=self.__qt \
+  })
+}

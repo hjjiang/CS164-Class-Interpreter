@@ -1,0 +1,24 @@
+<VBox background="#DDE5FF">
+  <HBox klass="header" fontSize="14px" fontWeight="bold">
+    Welcome to CS164!
+  </HBox>
+  <HBox>
+    <HBox klass="myclass" fract="45" 
+          background="lightblue"
+          onclick="self.fract=self.fract+(101-self.fract)/2">
+      Click here to grow
+    </HBox>
+    <HBox fract="55" background="yellow" klass="fontclass">
+      Click here to change color of other nodes (clicking on this node will work on PA8)
+    </HBox>
+    <HBox fract="25" background="white" klass="myclass">
+      Click to shrink font (clicking on this node will work in PA8)
+    </HBox>
+  </HBox>
+  <HBox>
+    CS164 - Spring 2012 -
+    <Link ref="./tests/tml/link.tml" klass="myclass">
+      (Refresh)
+    </Link>
+  </HBox>
+</VBox>

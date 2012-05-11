@@ -1,0 +1,6 @@
+<HBox>
+  <HBox background="#33ccff">Tweet Stream</HBox>
+  <HBox>A simple little stream of the most recent tweets.</HBox>
+  <VBox klass="stream"></VBox>
+  <Script ref="./tests/rx/twitter_simple.164"></Script>
+</HBox>

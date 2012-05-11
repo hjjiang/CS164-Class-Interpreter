@@ -1,0 +1,43 @@
+##
+# Word: The smallest indivisible piece of text, typically a word.
+# We assume that words cannot be broken with hyphens; that is, they ignore the
+# parent width.
+#
+def Word = Node:new({ \
+  word="<NULL/>", \
+  fontFamily="Helvetica", fontStyle="normal", fontVariant="normal", \
+  fontSize=12, fontWeight="normal", \
+  textDecoration="none", textTransform="none" \
+})
+
+##
+# A helper method that creates a new table with the properties supported by
+# the underlying Qt DOM layer.
+#
+Word._properties = lambda(self) {
+  { \
+    fontFamily=self.fontFamily, fontStyle=self.fontStyle, \
+    fontVariant=self.fontVariant, fontSize=self.fontSize, \
+    fontWeight=self.fontWeight, textDecoration=self.textDecoration, \
+    textTransform=self.textTransform \
+  }
+}
+
+Word.pass1_ComputeWidth = lambda(self) {
+  def args = {word=self.word, properties=self:_properties()}
+  def dimensions = native runtime.getWordDimensions(args)
+  self.width = dimensions[0]
+  self.height = dimensions[1]
+}
+
+Word.pass2_LayoutAndComputeHeight = lambda(self) {
+  # Do nothing, as the height has already been computed during pass 1.
+}
+
+Word.pass4_Render = lambda(self) {
+  def args = {word=self.word, x=self.x, y=self.y, \
+              properties=self:_properties(), widget=self.__qt}
+  self.__qt = native runtime.drawWord(args)
+}
+
+

@@ -1,0 +1,12 @@
+def x = 0
+
+def O = {}
+O.f = lambda(self, x) { print x }
+
+def g(y) {
+    x = x + y
+    O
+}
+
+g(5):f(x)
+

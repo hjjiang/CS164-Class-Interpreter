@@ -1,0 +1,12 @@
+<HBox >
+  <HBox background="#33ccff"> Script tag test </HBox>
+  <HBox klass="test" onclick="make_red('test')">
+    A test box
+  </HBox>
+  <HBox klass="test">
+    A test box
+  </HBox>
+  <VBox id="stream">
+  </VBox>
+  <Script ref="./tests/bquery/test_script.164"></Script>
+</HBox>

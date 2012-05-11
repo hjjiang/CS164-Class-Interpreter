@@ -1,0 +1,290 @@
+def Q = Node:new({})
+
+def bq(klass){
+	#print "bq"
+	def iterList = {}
+	def count = 0
+	for (child in preorder(window.document)){
+		#print "bq + child " + child
+		if('klass' in child){
+			if(child.klass == klass){
+				iterList[count] = child
+				count = count + 1
+			}
+		}
+	}
+	Q:new({iter = _getIterator_(iterList)})
+}
+
+def bquery(klass){
+	bq(klass)
+}
+
+Q.clone = lambda(self){
+    def iterList = {}
+    def count = 0
+    for (element in self.iter){
+        def clone = element:clone()
+        iterList[count] = clone
+        count = count + 1
+    }
+    self.iter = _getIterator_(iterList)
+    self
+}
+
+Q.appendTo = lambda(self,klass){
+    def iterList = {}
+    def count = 0
+    def kIter = bq(klass).iter
+    for(element in self.iter){ 
+        def kList = {}
+        def c = 0
+        def once = False
+        for (EoK in kIter){
+            if (once){
+                if ("children" in EoK){
+                    def i = len(EoK.children)
+                    def temp = element:clone()
+                    temp.parent = EoK
+                    EoK.children[i] = temp
+                    iterList[count] = temp
+                    count = count + 1
+                } else {
+                    EoK.children = {}
+                    def temp = element:clone()
+                    temp.parent = EoK   
+                    EoK.children[0] = temp
+                    iterList[count] = temp
+                    count = count + 1
+                }
+            } else {
+                if ("parent" in element){
+                    if (len(element.parent.children)>1) {
+                        def newChildren = {}
+                        def incre = 0
+                        def cIter = _getIterator_(element.parent.children)
+                        for (child in cIter){
+                            if (not(child == element)){
+                                newChildren[incre] = child
+                                incre = incre + 1
+                            }
+                        }
+                        element.parent.children = newChildren
+                    } else {
+                        element.parent.children = {}
+                    }
+                }
+                
+                if ("children" in EoK){
+                    def i = len(EoK.children)
+                    element.parent = EoK
+                    EoK.children[i] = element
+                    once = True
+                } else {
+                    EoK.children = {}
+                    element.parent = EoK
+                    EoK.children[0] = element
+                    once = True
+                }
+            }
+            kList[c] = EoK
+            c = c + 1 
+        }
+        kIter = _getIterator_(kList)
+        iterList[count] = element
+        count = count + 1
+    }
+    self.iter = _getIterator_(iterList)
+    self
+}
+
+Q.map = lambda(self,fun){
+	def iterList = {}
+	def count = 0
+	for (element in self.iter){
+		iterList[count] = fun(element)
+		count = count + 1
+	}
+	self.iter = _getIterator_(iterList)
+	self
+}
+
+Q.each = lambda(self,fun){
+	def iterList = {}
+	def count = 0
+	for (element in self.iter){
+        fun(element)
+		iterList[count] = element
+		count = count + 1
+	}
+	self.iter = _getIterator_(iterList)
+	self
+}
+
+
+Q.first = lambda(self){
+	def iterList = {}
+	def count = 0
+	iterList[count] = self.iter()
+    self.iter = _getIterator_(iterList)
+	self
+}
+
+Q.click = lambda(self,code){
+	def iterList = {}
+	def count = 0
+	#print "in click"
+	for(element in self.iter){
+		#print "for loop"
+		if('onclick' in element){
+			#print "changing onclick"
+			element:removeClickEvent()
+			element.onclick = code
+			element:addEventListener("click",code)
+			#iterList[count] = element
+			#count = count + 1
+		}
+		iterList[count] = element
+		count = count + 1
+	}
+	self.iter = _getIterator_(iterList)
+	self
+}
+
+Q.parents = lambda(self){
+	def iterList = {}
+	def count = 0
+	for (element in self.iter){
+		while('parent' in element){
+			iterList[count]=element.parent
+			count = count + 1
+			element = element.parent
+		}
+	}
+	self.iter = _getIterator_(iterList)
+	self
+}
+
+
+Q.append = lambda(self,content){
+    def iterList = {}
+    def count = 0
+    for(element in self.iter){
+        if ("children" in element){
+            def i = len(element.children)
+            def parsedContent = native runtime.parseTML({tml=content})
+            fixRawDOM(parsedContent)
+            parsedContent.parent = element   
+            element.children[i] = parsedContent
+        } else {
+            element.children = {}
+            def parsedContent = native runtime.parseTML({tml=content})
+            fixRawDOM(parsedContent)
+            parsedContent.parent = element  
+            element.children[0] = parsedContent
+        }
+        iterList[count] = element
+        count = count + 1
+    }
+    self.iter = _getIterator_(iterList)
+    self
+}
+
+
+Q.end = lambda(self){
+	if('prefilter' in self){
+		def f = 0
+		def newList = {}
+		def preFilter = self.prefilter
+		self.iter = preFilter[f]
+		def count = 1
+		while (count < len(preFilter)){
+			newList[f] = preFilter[count]
+			f = f + 1
+			count = count + 1
+		}
+		self.prefilter = newList
+	}
+	self
+}
+
+Q.filter = lambda(self,fun){
+	def iterList = {}
+	def oldElements = {}
+	def i = 0
+	def count = 0
+	def preFilter = {}
+	for (element in self.iter){
+		oldElements[i] = element
+		i = i + 1
+		if(fun(element) == True){
+			iterList[count] = element
+			count = count + 1
+		}
+	}
+	def i = 0
+	preFilter[0] = _getIterator_(oldElements)
+	if('prefilter' in self){
+		preFilter = append(preFilter,self.prefilter)
+	}
+	self.prefilter = preFilter
+	self.iter = _getIterator_(iterList)
+	self
+}
+
+
+Q.parent = lambda(self){
+	def iterList = {}
+	def count = 0
+	for(element in self.iter){
+		if ('parent' in element){
+			iterList[count] = element.parent
+			count = count + 1
+		}
+	}
+	self.iter = _getIterator_(iterList)
+	self
+}
+
+Q.children = lambda(self){
+	def iterList = {}
+	def count = 0
+	for(element in self.iter){
+		if ('children' in element){
+			for(child in element.children){
+				iterList[count] = child
+				count = count + 1	
+			}
+		}
+	}
+	self.iter = _getIterator_(iterList)
+	self
+}
+
+Q.background = lambda(self,color){
+	#print "background"
+	def iterList = {}
+	def count = 0
+	for(element in self.iter){
+		#print "back + element " + element
+		element.background = color
+		iterList[count] = element
+		count = count + 1
+	}
+	self.iter = _getIterator_(iterList)
+	self
+}
+
+Q.font = lambda(self,size){
+	#print "font"
+	def iterList = {}
+	def count = 0
+	for(element in self.iter){
+		#print "font changed to " + size + "px"
+		element.fontSize = size + "px"
+		iterList[count] = element
+		count = count + 1
+	}
+	self.iter = _getIterator_(iterList)
+	self
+}

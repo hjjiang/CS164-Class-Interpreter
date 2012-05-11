@@ -1,0 +1,48 @@
+<VBox klass="page" background="#DDE5FF" fract="100">
+ <HBox klass="header" background="orange" fract="100" onclick="bq('left'):appendTo('inner')">
+  <Word word="BQuery ">
+  </Word>
+  <Word word="test. ">
+  </Word>
+  <VBox klass="inner" background="red" fract="100">
+   <Word word="Yes! ">
+   </Word>
+  </VBox>
+  <VBox klass="inner" background="blue" fract="100">
+   <Word word="No? ">
+   </Word>
+  </VBox>
+ </HBox>
+ <HBox klass="src" background="green" fract="100">
+  <HBox klass="left" background="white" fract="20" >
+   <Word word="Left ">
+   </Word>
+   <Word word="Box! ">
+   </Word>
+  </HBox>
+  <HBox klass="right" background="white" fract="20">
+   <Word word="Right ">
+   </Word>
+   <Word word="Box! ">
+   </Word>
+  </HBox>
+ </HBox>
+ <VBox klass="output" background="white" fract="100">
+  <HBox klass="something" fract="100">
+   <Word word="The ">
+   </Word>
+   <Word word="output ">
+   </Word>
+   <Word word="box: ">
+   </Word>
+   <HBox fract="100">
+    <Word word="Hello ">
+    </Word>
+   </HBox>
+   <HBox fract="100">
+    <Word word="World ">
+    </Word>
+   </HBox>
+  </HBox>
+ </VBox>
+</VBox>

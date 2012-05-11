@@ -1,0 +1,298 @@
+def Stream = Object:new({})
+
+#[VOID]SUBSCRIBE -> STATUS GREEN
+#Register fun as a callback. 
+#Fun will be called on each element coming out of the stream.
+#It is possible to subscribe to a single stream multiple times.
+Stream.subscribe = lambda(self, fun){
+	#print "subscribing..."
+	def newCallBack = {}
+	def counter = 0
+	if ('callback' in self){
+		#print "    found callback: " + self.callback
+		for (calls in self.callback){
+			newCallBack[counter] = calls
+			counter = counter + 1
+		}
+		newCallBack[counter] = fun
+		#print "    newCB: " + newCallBack
+	}else{
+		#print "    did not find callback"
+		newCallBack[0] = fun
+	}
+	#print "subscribed!"
+    self.callback = newCallBack
+}
+
+#[VOID]PUSH -> STATUS GREEN
+#Inject element into a stream, causing it to be emitted from the stream.
+Stream.push = lambda(self, element){
+	#print "pushing element: " + element
+	def ret = 0
+	if ("callback" in self){
+		#print "    found callback: " + self.callback
+		for (funct in self.callback){
+			#print "        emitting with element: " + element
+			ret = funct(element)
+			#print "        emitted: " + ret
+			if ("consumedBy" in self){
+				#print "            found host(s) " + self.consumedBy
+				#print "            passing to host(s) " + ret
+				for (S in self.consumedBy){
+					S:push(ret)
+				}
+			}
+		}
+	}else{
+		#print "    no callbacks"
+		ret = element
+		#print "    emitted: " + element
+		if ("consumedBy" in self){
+			#print "        found host(s) " + self.consumedBy
+			#print "        passing to host(s) " + ret
+			for (S in self.consumedBy){
+				S:push(ret)
+			}
+		}
+	}
+	ret
+}
+
+#[VOID]pushMany -> STATUS GREEN
+#Inject a list of elements individually into a stream.
+Stream.pushMany = lambda(self, elist){
+	#print "pushMany"
+	for (element in elist){
+		self:push(element)
+	}
+}
+
+#[STREAM]MAP -> STATUS GREEN
+# Apply fun on every element. 
+# The return value of this method is a new stream, whose emitted values are those of the original stream with fun applied on them.
+Stream.map = lambda(self, fun){
+    #print "mapping"
+    def newStream = Stream:new({})
+    newStream:subscribe(fun)
+    newStream:consume(self)
+    # keep newStream2 if we want Rohin's test code to work
+    # if we find necessary, delete newStream2 and just return newStream
+    def newStream2 = Stream:new({})
+    newStream2:consume(newStream)
+    #print "mapping finished"
+    newStream2
+}
+
+#[STREAM]Observe -> STATUS GREEN/YELLOW
+#Constructs a new stream, similar to map(), except that the output of the mapper function should return an observable stream, from which the first emitted element is pushed into the stream returned by this method.
+# self emits something -> we apply fun to w/e self emits... do we have to store that somewhere?
+Stream.observe = lambda(self, fun){
+    #print "observing"
+    def retStream = Stream:new({})
+    def F = lambda(arg){
+    	def func = lambda(x){
+    		retStream:push(x)
+    	}
+    	def newStream = fun(arg)
+    	newStream:subscribe(func)
+    }
+    self:subscribe(F)
+    retStream
+}
+
+#[STREAM]Flatten -> STATUS YELLOW/GREEN
+Stream.flatten = lambda(self) {
+    #print "flattening"
+    def newStream = Stream:new({})
+    def pusher(iter){
+    	for (elements in iter){
+    		newStream:push(elements)
+    	}
+    }
+    #print "    self that we're flattening: " + self
+    self:subscribe(pusher)
+    newStream
+}
+
+Stream.filterHelper = lambda(self,fun){
+	#print "filterHelper"
+	def newCalls = {}
+    def counter = 0
+    if ("callback" in self){
+    	#print "    found callbacks"
+    	def oldCalls = self.callback
+    	#print "    creating newCB"
+    	for (calls in oldCalls){
+    		newCalls[counter] = lambda(x){fun(calls(x))}
+    		counter = counter + 1
+    	}
+    }else{
+    	#print "    no callbacks"
+    	newCalls[0] = fun
+    }
+    #print "helper finished"
+    Stream:new({callback = newCalls})
+}
+
+#[STREAM]Filter -> STATUS GREEN
+Stream.filter = lambda(self, fun){
+	#print "filtering"
+	def newStream = self:filterHelper(lambda(y){if(fun(y)==True){y}})
+	#print "filter finished"
+	newStream
+}
+
+#[VOID]Consume -> STATUS GREEN
+#consumes the stream0 such that whenever stream0 emits something, self emits it as well
+Stream.consume = lambda(self, stream0){
+    #print "consuming"
+    def newCon = {}
+    def counter = 0
+    if ("consumedBy" in stream0){
+    	#print "    Stream0 has been nommed by other streams!"
+    	for (S in stream0.consumedBy){
+    	newCon[counter] = S
+    	counter = counter + 1    		
+    	}
+    	newCon[counter] = self
+    }else{
+    	#print "    Stream0 hasn't been nommed"
+    	newCon[0] = self
+    }
+    stream0.consumedBy = newCon
+    #below is if we need to modify self to know what it ate
+    if (1 == 0){
+	    def newAteList = {}
+	    newAteList[stream0] = 1
+	    if("ateList" in self){
+	    	#print "    Current Stream has nommed things!"
+	    	if(stream0 in self.ateList){
+	    		#print "        Current Stream has nommed stream0 already!"
+	    		# let's do nothing for now, this is where i'd program in multiple consume cases
+	    	}else{
+	    		#print "        Current Stream hasn't nommed stream0"
+	    		def temp = self.ateList
+	    		temp[stream0] = 1
+	    		self.ateList = temp
+	    	}
+	    }else{
+	    	#print "    Current Stream is hungry!"
+	    	self.ateList = newAteList
+	    }
+	}
+    #print "DONE EATING"
+    self
+}
+
+#[STREAM]Multiplex
+#similar to consume
+Stream.multiplex = lambda(self, stream0){
+    def newStream = Stream:new({})
+    newStream:consume(self)
+    newStream:consume(stream0)
+    newStream
+}
+
+
+Stream.zipHelper = lambda(self){
+	#print "in zip helper"
+	if(len(self.a)>0 && len(self.b)>0){
+		#print "push time!"
+		def ret = {}
+		def oldAL = self.a
+		def oldBL = self.b
+		ret[0] = oldAL[0]
+		ret[1] = oldBL[0]
+		def aCount = 1
+		def newAL = {}
+		def bCount = 1
+		def newBL = {}
+		while(aCount < len(oldAL)){
+			newAL[aCount-1]=oldAL[aCount]
+			aCount = aCount + 1
+		}
+		self.a = newAL
+		while(bCount < len(oldBL)){
+			newBL[bCount-1]=oldBL[bCount]
+			bCount = bCount + 1
+		}
+		self.b = newBL
+		#print "inner print: " + ret
+		self:push(ret)
+	}
+}
+
+#[STREAM]ZIP -> STATUS GREEN
+#return (self,stream0) pairs only when their exists pairs
+Stream.zip = lambda(self, stream0){
+	#print "in Zip"
+    def newStream = Stream:new({})
+    def zipA = Stream:new({})
+    def zipB = Stream:new({})
+    def aList = {}
+    def bList = {}
+    newStream.a = aList
+    newStream.b = bList
+    #print "created substreams and linked with lists"
+    zipA:subscribe(lambda(e){
+    	#print "a:pushed"
+		def inserA = newStream.a
+		def eCount = len(inserA)
+		inserA[eCount] = e
+		newStream.a = inserA
+		newStream:zipHelper()
+	})
+	#print "subscribed zipA"
+	zipB:subscribe(lambda(e){
+		#print "b:pushed"
+		def inserB = newStream.b
+		def eCount = len(inserB)
+		inserB[eCount] = e
+		newStream.b = inserB
+		newStream:zipHelper()
+	})
+	#print "subscribed zipB"
+    zipA:consume(self)
+    zipB:consume(stream0)
+    newStream
+}
+
+#[STREAM] -> STATUS GREEN
+#A static factory method to construct a timer stream, which asynchronously fires a timer event at the specified interval. You can build this from window:setInterval(ms) in browser/window.164.
+# probably need another lambda for another code... should be a push.. still confused how this would work.
+Stream.timer = lambda(ms){
+	#print "creating timer stream!"
+	def newStream = Stream:new({})
+	def L = lambda(res){
+		newStream:push(ms)
+	}
+	window:setInterval(ms,L)
+	newStream
+}
+
+#[STREAM] -> STATUS RED
+#A static factory method to construct a stream out of DOM events. This is similar to node:pass5_BindEventListeners() in browser/node.164, except that Stream.fromDOMEvent is not limited just to "onclick" event handlers.
+Stream.fromDOMEvent = lambda(node, event){
+    #print "creating DOM Stream"
+    def newStream = Stream:new({})
+    def L = lambda(res){
+    	newStream:push(res)
+    }
+    for (inNode in postorder(node)){
+    	inNode:addProxyEventListener(event,L,node)
+    }
+    newStream
+}
+
+
+#[STREAM] -> STATUS GREEN
+#A static factory method to construct a stream that will emit the response from a remote HTTP server when it asynchronously arrives some time in the future.
+Stream.fromHttpRequest = lambda(url){
+	#print "creating httpRequest Stream"
+	def newStream = Stream:new({})
+	def L = lambda(res){
+		newStream:push(res.response)
+	}
+	window:http(url,L)
+    newStream
+}

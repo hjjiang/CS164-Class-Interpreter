@@ -1,0 +1,21 @@
+##
+# The main layout function that drives the multi-pass layout algorithm.
+#
+def layout(dom) {
+  for (n in preorder(dom))  { n:pass1_ComputeWidth() }
+  for (n in postorder(dom)) { n:pass2_LayoutAndComputeHeight() }
+  for (n in preorder(dom))  { n:pass3_ComputeAbsolutePositions() }
+
+  # Clear the main Qt widget, but retain references to the Qt widgets that
+  # represent each element in the "__qt" field of each DOM object.
+  native runtime.clear({})
+
+  # The render phase will reuse "__qt" widgets if possible.
+  for (n in preorder(dom))  { n:pass4_Render() }
+  for (n in preorder(dom))  {
+    if (not(n.__eventListenersBound)) {
+      n:pass5_BindEventListeners()
+      n.__eventListenersBound = True
+    }
+  }  
+}

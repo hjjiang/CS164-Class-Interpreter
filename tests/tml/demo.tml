@@ -1,0 +1,37 @@
+<HBox background="white"
+      topPadding="10" rightPadding="10" bottomPadding="10" leftPadding="10">
+  Hello! This is a sample TML page.
+  <HBox background="#dde5ff">
+    Below are some examples of HBoxes and VBoxes. This element with a blue
+    background is an HBox, but as you will see, if it were a VBox this text
+    would be laid out vertically.
+  </HBox>
+  <HBox fract="50" background="#b2dfee"
+        leftMargin="0" rightMargin="10" leftPadding="20">
+    Hi! I'm an HBox.
+    <HBox fract="25">
+      Here's a small nested HBox.
+    </HBox>
+    Next, a VBox with small HBoxes:
+    <VBox background="#ffb00f">
+      <HBox rightMargin="20" background="#eeee00">one</HBox>
+      <HBox fract="45" background="#bcee68">two</HBox>
+      <HBox leftMargin="30" background="#d0d2c4">three</HBox>
+    </VBox>
+  </HBox>
+  <VBox fract="50" background="#eedfcc"
+        leftMargin="10" rightMargin="0" topPadding="0">
+    <HBox topMargin="30" background="#ff6eb4">
+      This is a pink HBox with 30px top and bottom margins and implicit 5px
+      side margins.
+    </HBox>
+    <HBox topMargin="30" bottomMargin="10" background="#32cd32">
+      A green HBox with a 30px top margin. Note that it collapses with the pink
+      box's bottom margin. There's also a 10px bottom margin on this box.
+    </HBox>
+    <VBox topMargin="20" background="#8fd8d8">
+      VBox-with-a-20px-top-margin. I-need-to-write-on-one-line-or-else this
+      happens.
+    </VBox>
+  </VBox>
+</HBox>

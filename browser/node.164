@@ -1,0 +1,123 @@
+##
+# Node: The abstract base class of all DOM nodes.
+#
+def Node = Object:new({ \
+  __qt=null, __eventListenersBound=0, \
+  x=0, y=0, width=0, height=0, color="black", opacity="1", \
+  topMargin=0, rightMargin=0, bottomMargin=0, leftMargin=0, \
+  topPadding=0, rightPadding=0, bottomPadding=0, leftPadding=0 \
+})
+
+##
+# Subclasses of Node should override the visitor methods if they have children.
+#
+Node.visitInPreorder = lambda(self) { yield(self) }
+Node.visitInPostorder = lambda(self) { yield(self) }
+
+##
+# Declare the methods for the phases of the DOM layout algorithm.
+# 1.) Compute this node's width as a function of its parent's (top-down).
+# 2.) Layout the children relative to this node and appropriately increase
+#     this node's height (bottom-up).
+# 3.) Translate relative coordinates into absolute ones (top-down).
+# 4.) Render each node to the canvas (top-down).
+# 5.) Bind event listeners to each node as appropriate (top-down).
+#
+Node.pass1_ComputeWidth = lambda(self) { }
+Node.pass2_LayoutAndComputeHeight = lambda(self) { }
+Node.pass3_ComputeAbsolutePositions = lambda(self) {
+  self.x = self.x + self.parent.x
+  self.y = self.y + self.parent.y
+}
+Node.pass4_Render = lambda(self) { }
+Node.pass5_BindEventListeners = lambda(self) {
+  def register(node) {
+    if ("onclick" in self) {
+      node:addProxyEventListener("click", self.onclick, self)
+    }
+  }
+
+  # Attach the event listeners to the descendents and this node.
+  for (node in postorder(self)) {
+    register(node)
+  }
+}
+
+##
+# Attaches an event listener to this node for the given event. The provided
+# callback must be a string of 164 code to be executed in the context of this
+# node. Alternatively, it may be a lambda.
+#
+Node.addEventListener = lambda(self, event, callback) {
+  native runtime.addEventListener({node=self, event=event, code=callback})
+}
+
+Node.removeClickEvent = lambda(self){
+  native runtime.removeClickEvent({node=self})
+}
+
+##
+# A method similar to addEventListener, except that the value of "self" for
+# the callback may be specified independently of the node that recieves the
+# event.
+#
+Node.addProxyEventListener = lambda(self, event, callback, context) {
+  def args = {node=self, event=event, code=callback, context=context}
+  native runtime.addEventListener(args)
+}
+
+Node.clone = lambda(self) {
+  # all attributesare copied to the new object
+  def clone = {}
+
+  #TODO Fix prototype links!
+  
+  clone.x      = self.x
+  clone.y      = self.y
+  clone.width  = self.width
+  clone.height = self.height
+  clone.color  = self.color
+  clone.opacity = self.opacity
+  
+  clone.topMargin     = self.topMargin     
+  clone.rightMargin   = self.rightMargin  
+  clone.bottomMargin  = self.bottomMargin  
+  clone.leftMargin    = self.leftMargin    
+  clone.topPadding    = self.topPadding    
+  clone.rightPadding  = self.rightPadding  
+  clone.bottomPadding = self.bottomPadding 
+  clone.leftPadding   = self.leftPadding   
+  
+  if ("klass" in self) { clone.klass = self.klass }
+  if ("fract" in self) { clone.fract = self.fract }
+  if ("background" in self) { clone.background = self.background }
+  if ("ref" in self) { clone.ref = self.ref }
+  if ("src" in self) { clone.src = self.src }
+  if ("word" in self) { clone.word = self.word }
+  if ("processing" in self) { clone.processing = self.processing }
+  if ("fontFamily" in self) { clone.fontFamily = self.fontFamily }
+  if ("fontStyle" in self) { clone.fontStyle = self.fontStyle }
+  if ("fontVariant" in self) { clone.fontVariant = self.fontVariant }
+  if ("fontSize" in self) { clone.fontSize = self.fontSize }
+  if ("fontWeight" in self) { clone.fontWeight = self.fontWeight }
+  if ("textDecoration" in self) { clone.textDecoration = self.textDecoration }
+  if ("textTransform" in self) { clone.textTransform = self.textTransform }
+
+  if ("name" in self){ clone.name = self.name; print self.name}
+  clone.__mt = self.__mt
+
+  if ("children" in self){
+    def newChildren = {}
+    def count = 0
+    for (child in self.children){
+      def newChild = child:clone()
+      newChild.parent = clone
+      newChildren[count] = newChild
+      count = count + 1
+    }
+    clone.children = newChildren
+  }
+  clone.__eventListenersBound=0 # We do not rebind event listener
+  clone.___qt = null # the clone will receive its qtwidget during rendering
+  clone
+}

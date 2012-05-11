@@ -1,0 +1,50 @@
+##
+# Img: An image that is embedded in the page.
+#
+def Img = Node:new({src="", width=64, height=64, processing=False})
+
+Img.ready = lambda(self) {
+  ("rawdata" in self) && self.rawdata != null
+}
+
+Img.invalidate = lambda(self) {
+  self.rawdata = null
+}
+
+Img.pass1_ComputeWidth = lambda(self) {
+  if (not(self:ready()) && not(self.processing) && (self.src != "")) {
+    self.processing = True 
+    window:http(self.src, lambda(res) {
+      self.processing = False
+      if (res.status == "ok") {
+        self.rawdata = res.response
+        relayout()
+      } else {
+        print "ERROR: Cannot retrieve image from " + self.src
+      }
+    })
+  }
+
+  if ("width" in self) {
+    self.width = intOf(self.width)
+  } else {
+    self.width = Img.width
+  }
+}
+
+Img.pass2_LayoutAndComputeHeight = lambda(self) {
+  if ("height" in self) {
+    self.height = intOf(self.height)
+  } else {
+    self.height = Img.height
+  }
+}
+
+Img.pass4_Render = lambda(self) {
+  if (self:ready()) {
+    self.__qt = native runtime.drawImg({ \
+      x=self.x, y=self.y, width=self.width, height=self.height, \
+      rawdata = self.rawdata, widget=self.__qt \
+    })
+  } 
+}

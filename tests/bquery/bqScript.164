@@ -1,0 +1,6 @@
+print("bqScript loading....")
+def boom = "<HBox> Bomb the Derp </HBox>"
+
+def make_red(class) { bq(class):background("red"):click("bq('test'):background('cyan')")}
+
+

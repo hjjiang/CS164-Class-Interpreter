@@ -1,0 +1,19 @@
+##
+# Link: A link analogous to HTML's <a> tag. Its "ref" attribute points to a
+# file that contains the page to be displayed when a Link is left-clicked.
+# Links otherwise behave as HBoxes. Links are logical wrappers, so they have
+# zero margins and paddings unless explicitly specified.
+#
+def Link = HBox:new({ \
+  ref="", background="transparent", \
+  topMargin=0, rightMargin=0, bottomMargin=0, leftMargin=0, \
+  topPadding=0, rightPadding=0, bottomPadding=0, leftPadding=0 \
+})
+
+Link.pass5_BindEventListeners = lambda(self) {
+  for (node in postorder(self)) {
+    # In the future, it may make sense to ensure that the node is actually
+    # rendered (currently this is the case for all descendants of Link).
+    native runtime.addAnchorTarget({node=node, url=self.ref})
+  }
+}

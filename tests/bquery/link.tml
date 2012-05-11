@@ -1,0 +1,24 @@
+<VBox background="#DDE5FF">
+  <HBox klass="header" fontSize="14px" fontWeight="bold">
+    Welcome to CS164!
+  </HBox>
+  <HBox>
+    <HBox klass="myclass" fract="45" 
+          background="lightblue"
+          onclick="self.fract=self.fract+(101-self.fract)/2">
+      Click here to grow
+    </HBox>
+    <HBox fract="55" onclick="bq('myclass'):background('green')" background="yellow" klass="fontclass">
+      Click here to change color of other nodes
+    </HBox>
+    <HBox fract="25" onclick="bq('fontclass'):fontSize('10'):background('moccasin')" background="white" klass="myclass">
+      Click to shrink font
+    </HBox>
+  </HBox>
+  <HBox>
+    CS164 - Spring 2012 -
+    <Link ref="./tests/bquery/link.tml" klass="myclass">
+      (Refresh)
+    </Link>
+  </HBox>
+</VBox>

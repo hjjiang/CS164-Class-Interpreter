@@ -1,0 +1,1 @@
+def kool(class) { bq(class):background('red'):click("bq('ctest'):background('cyan')") }

@@ -1,0 +1,5 @@
+def Script = Node:new({})
+
+Script.pass5_BindEventListeners = lambda(self) {
+    native runtime.evaluateScript({url=self.ref})
+}

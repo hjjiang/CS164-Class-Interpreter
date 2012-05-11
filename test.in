@@ -1,0 +1,36 @@
+def Object = {}
+
+Object.new = lambda(self,o){
+	if (o == null){
+		o = {}
+	}
+	setmetatable(o,self)
+	self.__index = self
+	o
+} 
+
+Object.super = lambda(self){
+	if ('__index' in self){
+		def upOne = getmetatable(self)
+		upOne
+	} else {
+		def currentMT = getmetatable(self)
+		def superMT = getmetatable(currentMT)
+		superMT
+	}
+}
+
+def int(n) { native __builtin__.int({x=n}) }
+print int('31') + int('31')
+
+def A = Object:new({balance=0})
+A.deposit = lambda(self,v){self.balance=self.balance+v}
+
+def SA = A:new({balance=0})
+SA.deposit = lambda(self,v){self.balance=self.balance+2*v}
+
+def sa1 = SA:new({balance=1000})
+sa1:deposit(10)
+print sa1
+sa1:super().deposit(sa1,10)
+print sa1

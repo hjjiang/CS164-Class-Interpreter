@@ -1,0 +1,46 @@
+##
+# HBox: A box that lays out its children horizontally inline, wrapping to the
+# next line when they exceed the box's width.
+#
+def HBox = Box:new({})
+
+HBox.pass2_LayoutAndComputeHeight = lambda(self) {
+    def xCursor = self.leftPadding  # The x-offset of the current child.
+    def yCursor = self.topPadding   # The y-offset of the current child
+    def currentTallest = 0          # Tallest child on the current line.
+    def maxVertSpace = 0            # Tallest child, including bottom margin.
+
+    def previousRightMargin = 0
+    def previousBottomMargin = 0
+    for (child in self.children) {
+      # Collapse margins by finding their overlap.
+      def collapsedLeftMargin = max(0, child.leftMargin - previousRightMargin)
+      def collapsedTopMargin = max(0, child.topMargin - previousBottomMargin)
+      def horizSpace = collapsedLeftMargin + child.width + child.rightMargin
+      def contentWidth = self.width - (self.leftPadding + self.rightPadding)
+      
+      if (xCursor - self.leftPadding + horizSpace > contentWidth) {
+        # There is no more room on the current line so wrap to the next one.
+        xCursor = self.leftPadding
+        yCursor = yCursor + maxVertSpace
+        previousRightMargin = 0
+        previousBottomMargin = maxVertSpace - currentTallest
+        currentTallest = 0
+        maxVertSpace = 0
+        collapsedLeftMargin = child.leftMargin
+        collapsedTopMargin = max(0, child.topMargin - previousBottomMargin)
+        horizSpace = collapsedLeftMargin + child.width + child.rightMargin
+      }
+
+      # Position the child element.
+      child.x = xCursor + collapsedLeftMargin
+      child.y = yCursor + collapsedTopMargin
+      # Update the cursor.
+      xCursor = xCursor + horizSpace
+      currentTallest = max(currentTallest, collapsedTopMargin + child.height)
+      maxVertSpace = max(maxVertSpace, \
+          collapsedTopMargin + child.height + child.bottomMargin)
+      previousRightMargin = child.rightMargin
+    }
+    self.height = yCursor + maxVertSpace + self.bottomPadding
+}

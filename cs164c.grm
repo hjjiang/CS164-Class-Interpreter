@@ -1,0 +1,109 @@
+%ignore /[ \r\t\v\f]+/
+%ignore /#.*/
+%ignore /(\\\n)*/
+
+
+%left '||'
+%left '&&'
+%left '==' '!='
+%left '>=' '<=' '>' '<'
+%left '+' '-'
+%left '*' '/'
+%left '.'
+%%
+
+P ->  Q	 %{return n1.val %}
+	;
+
+Q -> Epsilon StatementList Epsilon %{return n2.val%}
+	| Sep 							%{return []%}
+	| _ 							%{return []%}
+	;
+
+Epsilon -> Sep
+		|_							%{return [] %}
+		;
+
+Sep -> Sep /[;\n]+/
+	|/[;\n]+/
+	;
+
+StatementList -> StatementList Sep Statement %{return n1.val+n3.val%}
+			| Statement
+			;
+
+
+Statement 		-> E 						%{return [('exp',n1.val)]%}
+				| Id '=' E 					%{return [('asgn',n1.val,n3.val)]%}
+				| 'def' Id '=' E 			%{return [('def',n2.val,n4.val)]%}
+				//| 'def' Id '=' E ':' Id '(' E ')'		%{return [('def',n2.val,('mcall',n4.val,n6.val,[n8.val]))] %}
+				//| E '.' String '=' E 		%{return [('put',n1.val,n3.val,n6.val)] %}
+				| E '[' E ']' '=' E 		%{return [('put',n1.val,n3.val,n6.val)] %}
+				| E '.' Id '=' E 			%{return [('put',n1.val,('string-lit',n3.val),n5.val)] %}
+				| 'print' E 			%{return [('print',n2.val)]%}
+				| 'error' E 			%{return [('error',n2.val)]%}
+				| 'def' Id '(' Ids ')' '{' Q '}'	%{return [('def',n2.val,('lambda',n4.val,n7.val))]%}
+				| 'if' '(' E ')' '{' Q '}' 'else' '{' Q '}' 	%{return [('if',n3.val,n6.val,n10.val)]%}
+				| 'if' '(' E ')' '{' Q '}' 	%{ return [('if',n3.val,n6.val,None)] %}
+				| 'while' '(' E ')' '{' Q '}'  %{ return [('while',n3.val,n6.val)] %}
+				| 'for' '(' Id 'in' E ')' '{' Q '}' %{ return [('for', n3.val, n5.val,n8.val)] %}
+				;
+
+
+E ->  'null' 	%{ return ('null',) %}
+	| Num
+	| Id 			 %{ return ('var',n1.val) %}
+	| String
+	| '{' '}' 		 %{ return ('dict-lit',[]) %}
+	| '{' Dict '}' 	 %{ return ('dict-lit',n2.val) %}
+	| '(' E ')'		%dprec 1    %{ return n2.val %}		
+	| E '+' E 		%dprec 4	%{ return ('+',n1.val,n3.val) %}
+	| E '-' E 		%dprec 4	%{ return ('-',n1.val,n3.val) %}
+	| E '*' E 		%dprec 3	%{ return ('*',n1.val,n3.val) %}
+	| E '/' E 		%dprec 3	%{ return ('/',n1.val,n3.val) %}
+	| E '==' E 		%dprec 6	%{ return ('==',n1.val,n3.val) %}
+	| E '!=' E 		%dprec 6 	%{ return ('!=',n1.val,n3.val) %}
+	| E '<=' E 		%dprec 5 	%{ return ('<=',n1.val,n3.val) %}
+	| E '>=' E 		%dprec 5 	%{ return ('>=',n1.val,n3.val) %}
+	| E '<' E 		%dprec 5	%{ return ('<',n1.val,n3.val) %}
+	| E '>' E 		%dprec 5 	%{ return ('>',n1.val,n3.val) %}
+	| E '&&' E 		%dprec 7 	%{ return ('&&',n1.val,n3.val) %}
+	| E '||' E 		%dprec 8 	%{ return ('||',n1.val,n3.val) %}
+	| E 'in' E 		%dprec 1 	%{ return ('in',n1.val,n3.val) %}
+	| E '[' E ']' 		%dprec 1	%{ return ('get',n1.val,n3.val) %}
+	| E '.' Id 			%dprec 1 	%{ return ('get',n1.val,('string-lit',n3.val)) %}
+	| 'len' '(' E ')' 	%dprec 2					%{ return ('len',n3.val)%}
+	| '[' E 'for' Id 'in' E ']' 					%{ return ('comprehension',n2.val,n4.val,n6.val) %}
+	| 'lambda' '(' Ids ')' '{' Q '}' 		%{ return ('lambda',n3.val,n6.val) %}
+	| E '(' Es ')' 					%dprec 1	    %{ return ('call',n1.val,n3.val) %}
+	| 'ite' '(' E ',' E ',' E ')' 					%{ return ('ite',n3.val,n5.val,n7.val) %}
+	| 'coroutine' '(' E ')' 						%{ return ('coroutine', n3.val) %}
+	| 'resume' '(' E ',' E ')' 						%{ return ('resume',n3.val,n5.val) %}
+	| 'yield' '(' E ')' 							%{ return ('yield',n3.val) %}
+	| 'input' '(' ')' 								%{ return ('input',) %}
+	| 'native' Id '.' Id '(' E ')' 		%{ return ('ncall',n2.val,n4.val,n6.val) %}
+	| E ':' Id '(' Es ')' 			%{ return ('mcall',n1.val,n3.val,n5.val) %}
+	;
+
+Dict -> Dict ',' Id '=' E 		%{ return n1.val+[(n3.val,n5.val)] %}
+	| Id '=' E 					%{ return [(n1.val,n3.val)] %}
+	;
+
+Ids -> Ids ',' Id 				%{return n1.val+[n3.val]%}
+	| Id 						%{ return [n1.val] %}
+	| _ 						%{ return [] %}
+	;
+
+Es -> Es ',' E 					%{ return n1.val+[n3.val] %}
+	| E 						%{ return [n1.val] %}
+	| _ 						%{ return [] %}
+	;
+
+Num -> /[0-9]+/			%{return ('int-lit',int(n1.val)) %}
+	;
+
+Id -> /[a-zA-Z_][a-zA-Z_0-9]*/ %{return n1.val %}
+	;
+
+String -> /"[^"]*"|'[^']*'/ 	%{return ('string-lit',n1.val[1:-1]) %}
+	;

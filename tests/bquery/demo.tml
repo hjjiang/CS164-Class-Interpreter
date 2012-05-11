@@ -1,0 +1,54 @@
+<VBox background="#DDE5FF">
+  <HBox klass="header" fontSize="14px" fontWeight="bold" background="orange">
+    BQuery test.
+  </HBox>
+  <HBox  background="moccasin">
+    <HBox klass="l-button" fract="25" background="lightblue"
+          onclick="bq('output'):append('<HBox>-- separator --</HBox>')">
+      Add separator
+    </HBox>
+    <HBox fract="25" background="yellow" klass="m-button"
+	      onclick="bq('left'):clone():appendTo('output')">
+      Add left box 
+    </HBox>
+    <HBox fract="25" background="lightgreen" klass="r-button"
+	      onclick="bq('right'):clone():appendTo('output')">
+      Add right box 
+    </HBox>
+	<HBox fract="25" background="lightgrey">
+	  <Link ref="./tests/bquery/demo.tml" klass="myclass">
+         Refresh the page
+      </Link>
+	</HBox>
+  </HBox>
+
+  <HBox background="moccasin" klass="boxContainer"> 
+    <HBox klass="left" fract="50" background="lightgreen"
+          onclick="">
+      <HBox klass="leftA" fract="50" background="lightblue"
+          onclick="self.fract=self.fract+(101-self.fract)/2">
+		  Click to adjust size
+      </HBox>
+      <HBox klass="leftB" fract="50" background="lightblue"
+          onclick="self.fract=self.fract-(101-self.fract)/2">
+		  Click to adjust size
+      </HBox>
+    </HBox>
+
+	<HBox klass="right" fract="50" background="lightyellow"
+          onclick="">
+      <HBox klass="right" fract="70" background="lightgrey"
+          onclick="bq('right'):filter(lambda(node) {node.width < 100}):background('green')">
+		  Click to test filter
+      </HBox>
+      <HBox klass="right" fract="30" background="lightgrey"
+          onclick="">
+		  Filter test
+      </HBox>
+    </HBox>
+  </HBox>
+
+  <VBox background="white" klass="output">
+    <HBox>The output box:</HBox>
+  </VBox>
+</VBox>

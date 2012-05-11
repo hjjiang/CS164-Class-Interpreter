@@ -1,0 +1,21 @@
+def output = ""
+
+def print_(x) {
+  output = output + x + " "
+}
+
+def testFilter() {
+  def original = Stream:new({})
+  def filtered = original:filter(lambda(element) {
+    element != "bad"
+  })
+  filtered:subscribe(print_)
+
+  original:push("yeah")
+  original:push("ok")
+  original:push("bad")
+  original:push("maybe")
+  original:push("bad")
+}
+
+testFilter()

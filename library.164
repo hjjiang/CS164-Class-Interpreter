@@ -1,0 +1,132 @@
+#TODO Merge your library and ours if you have customized yours!
+
+# Return an iterator for a list list is a dictionary this iterator iterates
+# over keys 0 .. len(list)-1 If want, you can use that function when desugaring
+# for.
+def _getIterator_(list) {
+    # 0-1 because we currently don't support unary minus
+    def i = 0-1
+    def l = len(list)
+    lambda() {
+         i = i + 1
+         if (i < l) { list[i]
+         } else { null } # terminates iteration
+    }
+}
+
+def False = 0
+def True = 1
+
+def not(b) {if (b) {False} else {True}}
+def max(x,y) {if (x < y) {y} else {x}}
+
+# Turn a coroutine into an iterator
+def wrap(lam, arg) {
+	def co = coroutine(lam)
+	lambda() {
+	    resume(co, arg)
+	}
+}
+
+# append o to list; return the list
+def append(list,o) {
+    list[len(list)]=o
+}
+
+# return an iterator which counts from start to stop
+def range(start, stop) {
+    def i = start
+    lambda() {
+        if(i < stop) {
+            def cur = i
+            i = i + 1
+            cur
+        } else {
+            null
+        }
+    }
+}
+
+# return the n first elements of list
+def take_from(list, n) {
+    def res = {}
+    def i = 0
+    for (x in list) {
+        if (i >= n) {
+            append(res, x)
+        }
+        i = i + 1
+    }
+    res
+}
+
+# duplicate a list
+def copy(list) {
+    def res = {}
+    for (x in list) {
+        append(res, x)
+    }
+    res
+}
+
+# tail of a list
+def tail(list) {
+    def res = {}
+    def first = True
+    for (x in list) {
+        if (first) {
+            first = False
+        } else {
+            append(res, x)
+        }
+    }
+    res
+}
+
+# functional map on a list
+def map(fun, list) {
+    def res = {}
+    for (x in list) {
+        append(res, fun(x))
+    }
+    res
+}
+
+# functional fold/reduce on a list
+def fold(zero, fun, list) {
+    def res = zero
+    for (x in list) {
+        res = fun(res, x)
+    }
+    res
+}
+
+# Metatables
+def setmetatable(o,t) {
+    o.__mt = t
+} 
+def getmetatable(o) {
+    o.__mt
+}
+
+# Type conversions
+def intOf(str) {
+  native __builtin__.int({x=str})
+}
+
+def floatOf(str) {
+  native __builtin__.float({x=str})
+}
+
+# Web stuff
+def encodeUrl(baseUrl, args) {
+    if (args == {}) {
+        baseUrl
+    } else {
+        baseUrl + "?" + native urllib.urlencode({query=args})
+    }
+}
+
+def doQuote(str) {
+    native runtime.doQuote({str=str})
+}

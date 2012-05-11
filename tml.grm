@@ -1,0 +1,60 @@
+%import tml
+%import warnings
+
+%ignore /[ \n\r\t\v\f]+/
+%ignore /<!--(.|[\r\n])*?-->/
+
+%%
+
+Doc        ->  Tag                          
+           ;                    
+Tag        ->  EmptyTag    %{ return tml.createNode(n1.val[0], n1.val[1]) %}
+           |   StartTag Content EndTag
+%{
+    if n1.val[0] != n3.val:
+        warnings.warn(('start tag "{0}" does not match '
+                       'end tag "{1}"').format(n1.val[0], n3.val))
+    return tml.createNode(n1.val[0], n1.val[1], n2.val)
+%}
+           ;
+           
+Content    ->  _
+           | AContent
+           ;
+                                           
+AContent   ->  Tag                %{ return [n1.val] %}
+           |   Text               %{ return n1.val %}
+           |   AContent Tag       %{ return n1.val + [n2.val] %}
+           |   AContent Tag Text  %{ return n1.val + [n2.val] + n3.val %}
+           ;                                                                   
+                                            
+Text       -> RawText             %{ return tml.createWordNodes(n1.val) %}
+           ;                                
+                                            
+StartTag   ->  '<' Name Attributes '>'      %{ return (n2.val, n3.val) %}
+           ;                                
+EndTag     ->  '</' Name '>'                %{ return n2.val %}
+           ;                                
+EmptyTag   ->  '<' Name Attributes '/>'     %{ return (n2.val, n3.val) %}
+           ;                                
+                                            
+Attributes ->  _                            %{ return [] %}
+           |   Attributes Attribute         %{ return n1.val + [n2.val] %}
+           ;                                
+Attribute  ->  Name '=' String              %{ return (n1.val, n3.val[1:-1]) %}
+           ;
+           
+Name       -> /[a-zA-Z:_][a-zA-Z0-9:_.-]*/
+           ;
+RawText    -> Textlet                       %{ return n1.val %}
+           |  RawText Textlet               %{ return n1.val + ' ' + n2.val %}
+           ;
+Textlet    -> '='
+           |  '/'
+           |  '"'
+           |  Name
+           |  String
+           |  /[^\/<>=" \n\r\t\v\f]+/
+           ;
+String     -> /\"(?:\\\\|\\\"|\\\r\n|\\\r|\\\n|[^\"\r\n])*\"/   
+           ;

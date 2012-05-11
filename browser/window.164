@@ -1,0 +1,54 @@
+##
+# Window: The top-level DOM element that represents the root of the document
+# canvas.
+#
+def Window = Node:new({ \
+  document=null, \
+  topMargin=0, rightMargin=0, bottomMargin=0, leftMargin=0, \
+  topPadding=0, rightPadding=0, bottomPadding=0, leftPadding=0 \
+})
+
+Window.visitInPreorder = lambda(self) {
+  yield(self)
+  self.document:visitInPreorder()
+}
+
+Window.visitInPostorder = lambda(self) {
+  self.document:visitInPostorder()
+  yield(self)
+}
+
+Window.pass1_ComputeWidth = lambda(self) { }
+Window.pass2_LayoutAndComputeHeight = lambda(self) {
+  self.document.x = 0
+  self.document.y = 0
+  def childVertMargin = self.document.topMargin + self.document.bottomMargin
+  self.height = self.document.height + childVertMargin
+}
+Window.pass3_ComputeAbsolutePositions = lambda(self) { }
+Window.pass4_Render = lambda(self) {
+  native runtime.setDOMWindowSize({width=self.width, height=self.height})
+}
+Window.pass5_BindEventListeners = lambda(self) { }
+
+Window.findId = lambda(self, id) {
+  def matched = null
+  for (node in preorder(self.document)) {
+    if (("id" in node) && (node.id == id)) {
+      matched = node
+    }
+  }
+  matched
+}
+
+Window.setTimeout = lambda(self, ms, code) {
+  native runtime.addTimerCallback({window=self, ms=ms, code=code})
+}
+
+Window.setInterval = lambda(self, ms, code) {
+  native runtime.addTimerCallback({window=self, ms=ms, code=code, repeat=True})
+}
+
+Window.http = lambda(self, uri, code) {
+  native runtime.sendHttp({window=self, uri=uri, code=code}) 
+}

@@ -1,0 +1,12 @@
+<HBox>
+  <HBox background="#33ccff">Youtube Stream: Current Most Popular</HBox>
+  <HBox fract="75">Youtube Title + description.</HBox>
+  <HBox fract="10" klass="update">update</HBox>
+  <HBox fract="15" background="lightgrey">
+      <Link ref="./contest.tml" klass="myclass">
+         (Refresh)
+      </Link>
+  </HBox>
+  <VBox klass="stream"></VBox>
+  <Script ref="./contest.164"></Script>
+</HBox>

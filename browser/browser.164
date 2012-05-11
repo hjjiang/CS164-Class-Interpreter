@@ -1,0 +1,55 @@
+##
+# The glue that receives a raw DOM obtained from the TML parser's SDT and
+# uses it to compute a page layout and render it.
+#
+
+##
+# The window is the root of the DOM tree. Its "document" property is the root
+# of the document body.
+#
+def window = null
+def focusedElement = null
+
+def relayout() {
+  layout(window)
+}
+
+def preorderRawDOM(tree) {
+  def traverse(n) {
+    yield(n)
+    if ("children" in n) {
+      for (c in n.children) { traverse(c) }
+    }
+  }
+  def co = coroutine(lambda(_) { traverse(tree) })
+  lambda() { resume(co, null) }
+}
+
+##
+# TODO: Fix the raw DOM structure obtained from the TML parser's SDT.
+# 1.) Convert the DOM to 164 format. Most of this was done in the TML parser,
+#     but we need to add references to each object's appropriate prototype.
+# 2.) Add DOM tree parent pointers.
+#
+def fixRawDOM(node) {
+  _G[node.name]:new(node)
+  for (child in _getIterator_(node.children)){
+    fixRawDOM(child)
+    child.parent = node
+  }
+}
+
+def layoutRawDOM(dom) {
+  # Fix the raw DOM and convert it into a tree of 164 objects.
+  fixRawDOM(dom)
+
+  window = Window:new({ \
+    document=dom, name="Window", width=600, height=800 \
+  })
+
+  dom.parent = window
+  dom.x = 5
+  dom.y = 5
+
+  relayout()
+}

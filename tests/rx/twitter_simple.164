@@ -1,0 +1,23 @@
+print("Tweet Stream loading....")
+
+def tweetUrl = "http://api.twitter.com/1/statuses/public_timeline.json"
+def createTweetObservable(ev) { Stream.fromHttpRequest(tweetUrl) }
+def simplifyTweet(tweet) { {user=tweet.user.name, text=tweet.text} }
+
+def timer = Stream.timer(60000)
+# 1.) Observable[Int]                     -> Observable[Observable[List[Tweet]]]
+# 2.) Observable[Observable[List[Tweet]]] -> Observable[List[Tweet]]
+# 3.) Observable[List[Tweet]]             -> Observable[Tweet]
+# 4.) Observable[Tweet]                   -> Observable[SimpleTweet]
+def tweets = timer:observe(createTweetObservable):flatten():map(simplifyTweet)
+
+# Append the tweets to the page.
+def streamElement = bq("stream")
+tweets:subscribe(lambda(tweet) {
+  def tweetTml = "<VBox><HBox>From: " + tweet.user + "</HBox>" + \
+      "<HBox>" + tweet.text + "</HBox></VBox>"
+  streamElement:append(tweetTml) 
+})
+
+# Pull in some tweets right now by firing the timer stream.
+timer:push(0)
